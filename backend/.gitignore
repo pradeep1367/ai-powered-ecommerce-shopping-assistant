@@ -7,13 +7,18 @@
 *.war
 *.ear
 
+# ==============================
 # Maven
+# ==============================
 target/
+HELP.md
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# ==============================
 # Gradle
+# ==============================
 .gradle/
 build/
 !**/src/main/**/build/
@@ -42,7 +47,7 @@ application-local.properties
 application-secret.properties
 
 # ==============================
-# IDE - Spring Tool Suite / Eclipse
+# Eclipse / Spring Tool Suite
 # ==============================
 .apt_generated/
 .classpath

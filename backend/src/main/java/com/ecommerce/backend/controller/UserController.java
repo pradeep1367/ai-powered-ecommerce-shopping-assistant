@@ -1,6 +1,8 @@
 
 package com.ecommerce.backend.controller;
 
+import com.ecommerce.backend.dto.LoginRequest;
+import com.ecommerce.backend.dto.LoginResponse;
 import com.ecommerce.backend.dto.RegistrationRequest;
 import com.ecommerce.backend.dto.RegistrationResponse;
 import com.ecommerce.backend.entity.User;
@@ -40,5 +42,15 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    // Login an existing user
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> loginUser(
+            @Valid @RequestBody LoginRequest request) {
+
+        LoginResponse response = userService.loginUser(request);
+
+        return ResponseEntity.ok(response);
     }
 }
