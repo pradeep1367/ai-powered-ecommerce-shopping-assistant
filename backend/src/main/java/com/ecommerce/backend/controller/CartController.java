@@ -1,6 +1,7 @@
 
 package com.ecommerce.backend.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.backend.dto.CartItemResponse;
+import com.ecommerce.backend.dto.CartResponse;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.service.CartService;
 
@@ -38,18 +40,24 @@ public class CartController {
                 .body(convertToResponse(cartItem));
     }
 
-    // View cart
+    // View cart with grand total
     @GetMapping
-    public ResponseEntity<List<CartItemResponse>> getCart(
+    public ResponseEntity<CartResponse> getCart(
             Authentication authentication) {
 
         String email = authentication.getName();
 
-        List<CartItemResponse> response = cartService
+        List<CartItemResponse> items = cartService
                 .getCartItems(email)
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
+
+        BigDecimal totalAmount = items.stream()
+                .map(CartItemResponse::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        CartResponse response = new CartResponse(items, totalAmount);
 
         return ResponseEntity.ok(response);
     }
@@ -89,6 +97,8 @@ public class CartController {
         return new CartItemResponse(
                 cartItem.getCartItemId(),
                 cartItem.getProduct().getProductId(),
+                cartItem.getProduct().getProductName(),
+                cartItem.getProduct().getPrice(),
                 cartItem.getQuantity()
         );
     }
