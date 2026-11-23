@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ShopEasy</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        .login-container {
+            max-width: 420px;
+            margin: 60px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .login-button:hover {
+            background: #1d4ed8;
+        }
+
+        .login-button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .register-link a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .login-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 8%;
+            background: #2563eb;
+            color: white;
+        }
+
+        .login-nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+
+        #loginMessage {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 500px) {
+            .login-container {
+                margin: 30px 15px;
+                padding: 22px;
+            }
+
+            .login-nav {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="login-nav">
+        <h2>ShopEasy</h2>
+
+        <nav>
+            <a href="../index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
+
+    <main class="login-container">
+
+        <h2>Welcome Back!</h2>
+        <p class="login-subtitle">Login to your ShopEasy account</p>
+
+        <form id="loginForm">
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="login-button" id="loginButton">
+                Login
+            </button>
+
+            <p id="loginMessage"></p>
+
+        </form>
+
+        <p class="register-link">
+            Don't have an account?
+            <a href="register.html">Register here</a>
+        </p>
+
+    </main>
+
+    <script>
+        const API_BASE_URL = "http://localhost:8080";
+
+        document.getElementById("loginForm").addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            const loginButton = document.getElementById("loginButton");
+            const message = document.getElementById("loginMessage");
+
+            loginButton.disabled = true;
+            loginButton.textContent = "Logging in...";
+            message.textContent = "";
+
+            try {
+
+                const response = await fetch(
+                    `${API_BASE_URL}/api/v1/users/login`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || "Login failed. Check your credentials.");
+                }
+
+                if (!data.token) {
+                    throw new Error("Login response did not contain a JWT token.");
+                }
+
+                // Store JWT token and user information
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("userId", data.userId);
+                localStorage.setItem("fullName", data.fullName);
+                localStorage.setItem("email", data.email);
+                localStorage.setItem("role", data.role);
+
+                message.style.color = "green";
+                message.textContent = "Login successful! Redirecting...";
+
+                setTimeout(function() {
+                    window.location.href = "products.html";
+                }, 1000);
+
+            } catch (error) {
+
+                message.style.color = "red";
+                message.textContent = error.message;
+
+            } finally {
+
+                loginButton.disabled = false;
+                loginButton.textContent = "Login";
+
+            }
+
+        });
+    </script>
+
+</body>
+</html>

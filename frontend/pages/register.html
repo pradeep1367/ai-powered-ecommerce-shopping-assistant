@@ -1,0 +1,286 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ShopEasy</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        .register-container {
+            max-width: 450px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .register-container h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .register-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .register-button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .register-button:hover {
+            background: #1d4ed8;
+        }
+
+        .register-button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-link a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .register-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 8%;
+            background: #2563eb;
+            color: white;
+        }
+
+        .register-nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+
+        #registerMessage {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 500px) {
+            .register-container {
+                margin: 25px 15px;
+                padding: 22px;
+            }
+
+            .register-nav {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="register-nav">
+        <h2>ShopEasy</h2>
+
+        <nav>
+            <a href="../index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="login.html">Login</a>
+        </nav>
+    </header>
+
+    <main class="register-container">
+
+        <h2>Create Account</h2>
+        <p class="register-subtitle">Join ShopEasy today!</p>
+
+        <form id="registerForm">
+
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    placeholder="Enter your full name"
+                    minlength="3"
+                    maxlength="100"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number (Optional)</label>
+                <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    placeholder="Enter your phone number"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Create a password"
+                    minlength="8"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    placeholder="Re-enter your password"
+                    minlength="8"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="register-button" id="registerButton">
+                Register
+            </button>
+
+            <p id="registerMessage"></p>
+
+        </form>
+
+        <p class="login-link">
+            Already have an account?
+            <a href="login.html">Login here</a>
+        </p>
+
+    </main>
+
+    <script>
+
+        const API_BASE_URL = "http://localhost:8080";
+
+        document.getElementById("registerForm").addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const fullName = document.getElementById("fullName").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            const registerButton = document.getElementById("registerButton");
+            const message = document.getElementById("registerMessage");
+
+            if (password !== confirmPassword) {
+                message.style.color = "red";
+                message.textContent = "Passwords do not match!";
+                return;
+            }
+
+            registerButton.disabled = true;
+            registerButton.textContent = "Registering...";
+            message.textContent = "";
+
+            try {
+
+                const response = await fetch(
+                    `${API_BASE_URL}/api/v1/users/register`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            fullName: fullName,
+                            email: email,
+                            password: password,
+                            phone: phone || null
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || data.error || "Registration failed. Please try again."
+                    );
+                }
+
+                message.style.color = "green";
+                message.textContent = "Registration successful! Redirecting to Login...";
+
+                document.getElementById("registerForm").reset();
+
+                setTimeout(function() {
+                    window.location.href = "login.html";
+                }, 1500);
+
+            } catch (error) {
+
+                message.style.color = "red";
+                message.textContent = error.message;
+
+            } finally {
+
+                registerButton.disabled = false;
+                registerButton.textContent = "Register";
+
+            }
+
+        });
+
+    </script>
+
+</body>
+</html>

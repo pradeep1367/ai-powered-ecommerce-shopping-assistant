@@ -82,6 +82,8 @@ public class ProductController {
 
         return productService.searchAndFilterProducts(
                 keyword, categoryId, minPrice, maxPrice,
+
+                
                 page, size, sortDirection);
     }
 }

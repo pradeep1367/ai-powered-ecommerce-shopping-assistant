@@ -1,0 +1,537 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - ShopEasy</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        .products-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 8%;
+            background: #2563eb;
+            color: white;
+        }
+
+        .products-nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+
+        .products-container {
+            padding: 30px 8%;
+        }
+
+        .products-container h2 {
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .filter-section input,
+        .filter-section select {
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 22px;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .product-image {
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            border-radius: 5px;
+            font-size: 45px;
+            margin-bottom: 15px;
+        }
+
+        .product-card h3 {
+            margin-bottom: 10px;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            color: #2563eb;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .product-stock {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .add-cart-button {
+            width: 100%;
+            padding: 10px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .add-cart-button:hover {
+            background: #1d4ed8;
+        }
+
+        .add-cart-button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            margin: 15px 0;
+            color: #555;
+        }
+
+        .cart-message {
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .pagination button {
+            padding: 9px 16px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            .products-nav {
+                padding: 15px;
+            }
+
+            .products-container {
+                padding: 25px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="products-nav">
+        <h2>ShopEasy</h2>
+
+        <nav>
+            <a href="../index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="cart.html">Cart</a>
+            <a href="login.html">Login</a>
+        </nav>
+    </header>
+
+    <main class="products-container">
+
+        <h2>Explore Our Products</h2>
+
+        <div class="filter-section">
+
+            <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                placeholder="Search products..."
+            >
+
+            <select id="categoryFilter">
+                <option value="">All Categories</option>
+            </select>
+
+            <select id="sortFilter">
+                <option value="asc">Price: Low to High</option>
+                <option value="desc">Price: High to Low</option>
+            </select>
+
+        </div>
+
+        <p id="statusMessage" class="status-message">
+            Loading products...
+        </p>
+
+        <div class="products-grid" id="productsGrid"></div>
+
+        <div class="pagination">
+            <button id="previousButton" type="button" disabled>
+                Previous
+            </button>
+
+            <span id="pageInfo">Page 1</span>
+
+            <button id="nextButton" type="button" disabled>
+                Next
+            </button>
+        </div>
+
+    </main>
+
+    <script>
+        const API_BASE_URL = "http://localhost:8080/api/v1";
+
+        const productsGrid = document.getElementById("productsGrid");
+        const searchInput = document.getElementById("searchInput");
+        const categoryFilter = document.getElementById("categoryFilter");
+        const sortFilter = document.getElementById("sortFilter");
+        const statusMessage = document.getElementById("statusMessage");
+
+        const previousButton = document.getElementById("previousButton");
+        const nextButton = document.getElementById("nextButton");
+        const pageInfo = document.getElementById("pageInfo");
+
+        let currentPage = 0;
+        const pageSize = 5;
+        let totalPages = 0;
+
+        // Load categories
+        async function loadCategories() {
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/categories`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Unable to load categories");
+                }
+
+                const categories = await response.json();
+
+                categories.forEach(category => {
+
+                    const option = document.createElement("option");
+
+                    option.value = category.categoryId;
+                    option.textContent = category.categoryName;
+
+                    categoryFilter.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error("Category Error:", error);
+            }
+        }
+
+        // Load products
+        async function loadProducts() {
+
+            productsGrid.innerHTML = "";
+            statusMessage.textContent = "Loading products...";
+
+            const params = new URLSearchParams();
+
+            const keyword = searchInput.value.trim();
+            const categoryId = categoryFilter.value;
+            const sortDirection = sortFilter.value;
+
+            if (keyword) {
+                params.append("keyword", keyword);
+            }
+
+            if (categoryId) {
+                params.append("categoryId", categoryId);
+            }
+
+            params.append("page", currentPage);
+            params.append("size", pageSize);
+            params.append("sortDirection", sortDirection);
+
+            try {
+
+                const response = await fetch(
+                    `${API_BASE_URL}/products/filter?${params.toString()}`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Unable to fetch products");
+                }
+
+                const data = await response.json();
+
+                totalPages = data.totalPages;
+
+                if (!data.content || data.content.length === 0) {
+
+                    statusMessage.textContent = "No products found.";
+
+                    updatePagination(data);
+                    return;
+                }
+
+                statusMessage.textContent =
+                    `Showing ${data.numberOfElements} products`;
+
+                data.content.forEach(product => {
+                    displayProduct(product);
+                });
+
+                updatePagination(data);
+
+            } catch (error) {
+
+                console.error("Product Error:", error);
+
+                statusMessage.textContent =
+                    "Unable to load products. Please check the backend.";
+
+                pageInfo.textContent = "Page unavailable";
+                previousButton.disabled = true;
+                nextButton.disabled = true;
+            }
+        }
+
+        // Display an individual product
+        function displayProduct(product) {
+
+            const card = document.createElement("div");
+            card.className = "product-card";
+
+            const image = document.createElement("div");
+            image.className = "product-image";
+            image.textContent = "🛍️";
+
+            const name = document.createElement("h3");
+            name.textContent = product.productName;
+
+            const brand = document.createElement("p");
+            brand.textContent = "Brand: " + (product.brand || "N/A");
+
+            const description = document.createElement("p");
+            description.className = "product-description";
+            description.textContent =
+                product.description || "No description available";
+
+            const category = document.createElement("p");
+            category.textContent =
+                "Category: " +
+                (product.category
+                    ? product.category.categoryName
+                    : "Uncategorized");
+
+            const price = document.createElement("p");
+            price.className = "product-price";
+            price.textContent =
+                Number(product.price).toLocaleString("en-IN", {
+                    style: "currency",
+                    currency: "INR"
+                });
+
+            const stock = document.createElement("p");
+            stock.className = "product-stock";
+            stock.textContent =
+                "Available Stock: " + product.stockQuantity;
+
+            const button = document.createElement("button");
+            button.className = "add-cart-button";
+            button.type = "button";
+
+            const message = document.createElement("p");
+            message.className = "cart-message";
+
+            if (product.stockQuantity <= 0) {
+                button.textContent = "Out of Stock";
+                button.disabled = true;
+            } else {
+                button.textContent = "Add to Cart";
+
+                button.addEventListener("click", () => {
+                    addToCart(product.productId, button, message);
+                });
+            }
+
+            card.appendChild(image);
+            card.appendChild(name);
+            card.appendChild(brand);
+            card.appendChild(description);
+            card.appendChild(category);
+            card.appendChild(price);
+            card.appendChild(stock);
+            card.appendChild(button);
+            card.appendChild(message);
+
+            productsGrid.appendChild(card);
+        }
+
+        // Add product to customer's cart
+        async function addToCart(productId, button, message) {
+
+            const token = localStorage.getItem("token");
+            const role = localStorage.getItem("role");
+
+            if (!token) {
+                message.style.color = "red";
+                message.textContent = "Please login to add products to cart.";
+                return;
+            }
+
+            if (role !== "CUSTOMER") {
+                message.style.color = "red";
+                message.textContent = "Only customers can add products to cart.";
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Adding...";
+
+            try {
+
+                const response = await fetch(
+                    `${API_BASE_URL}/customer/cart/items?productId=${productId}&quantity=1`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+
+                    if (response.status === 401 ||
+                        response.status === 403) {
+                        throw new Error(
+                            "Session expired or access denied. Please login again."
+                        );
+                    }
+
+                    const errorText = await response.text();
+
+                    throw new Error(
+                        errorText || "Unable to add product to cart."
+                    );
+                }
+
+                message.style.color = "green";
+                message.textContent = "Product added to cart successfully!";
+
+                button.textContent = "Added to Cart";
+
+            } catch (error) {
+
+                console.error("Add to Cart Error:", error);
+
+                message.style.color = "red";
+                message.textContent = error.message;
+
+                button.disabled = false;
+                button.textContent = "Add to Cart";
+            }
+        }
+
+        // Update pagination
+        function updatePagination(data) {
+
+            const total = data.totalPages || 0;
+            const current = data.number || 0;
+
+            pageInfo.textContent =
+                total === 0
+                    ? "Page 0 of 0"
+                    : `Page ${current + 1} of ${total}`;
+
+            previousButton.disabled = data.first || total === 0;
+            nextButton.disabled = data.last || total === 0;
+        }
+
+        // Search
+        searchInput.addEventListener("input", () => {
+            currentPage = 0;
+            loadProducts();
+        });
+
+        // Category filter
+        categoryFilter.addEventListener("change", () => {
+            currentPage = 0;
+            loadProducts();
+        });
+
+        // Price sorting
+        sortFilter.addEventListener("change", () => {
+            currentPage = 0;
+            loadProducts();
+        });
+
+        // Previous page
+        previousButton.addEventListener("click", () => {
+
+            if (currentPage > 0) {
+                currentPage--;
+                loadProducts();
+            }
+        });
+
+        // Next page
+        nextButton.addEventListener("click", () => {
+
+            if (currentPage < totalPages - 1) {
+                currentPage++;
+                loadProducts();
+            }
+        });
+
+        // Initialize page
+        async function initializePage() {
+            await loadCategories();
+            await loadProducts();
+        }
+
+        initializePage();
+
+    </script>
+
+</body>
+</html>
